@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Vulnerabilidades</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+        h1 { text-align: center; color: #333; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #333; color: white; }
+
+        .critical { background-color: #ff4d4d; }
+        .high { background-color: #ffcc00; }
+        .medium { background-color: #ffff99; }
+        .low { background-color: #ccffcc; }
+        .info { background-color: #cce6ff; }
+
+        .chart-container { width: 100%; max-width: 600px; margin: 20px auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Relatório de Vulnerabilidades</h1>
+
+        {% if vulnerabilities %}
+            <div class="chart-container">
+                <canvas id="vulnChart"></canvas>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Severidade</th>
+                        <th>Vulnerabilidade</th>
+                        <th>Descrição</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vuln in vulnerabilities %}
+                        <tr class="{% if vuln.riskcode == '4' %}critical{%
+                                   elif vuln.riskcode == '3' %}high{%
+                                   elif vuln.riskcode == '2' %}medium{%
+                                   elif vuln.riskcode == '1' %}low{%
+                                   else %}info{% endif %}">
+                            <td>
+                                {% if vuln.riskcode == '4' %}Crítico{%
+                                   elif vuln.riskcode == '3' %}Alto{%
+                                   elif vuln.riskcode == '2' %}Médio{%
+                                   elif vuln.riskcode == '1' %}Baixo{%
+                                   else %}Informacional{% endif %}
+                            </td>
+                            <td>{{ vuln.alert }}</td>
+                            <td>{{ vuln.desc }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhuma vulnerabilidade encontrada.</p>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var severityCounts = JSON.parse('{{ severity_counts | tojson | safe }}');
+        var ctx = document.getElementById('vulnChart').getContext('2d');
+        var vulnChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(severityCounts),
+                datasets: [{
+                    label: 'Quantidade',
+                    data: Object.values(severityCounts),
+                    backgroundColor: ['#cce6ff', '#ccffcc', '#ffff99', '#ffcc00', '#ff4d4d']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Distribuição de Vulnerabilidades' }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
